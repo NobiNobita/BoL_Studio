@@ -1,5 +1,5 @@
 if myHero.charName ~= "Caitlyn" then return end
-local version = "1.01"
+local version = "1.02"
 
 -------------------------------------
 local REQUIRED_LIBS = {
@@ -48,6 +48,48 @@ LU = LazyUpdater("Caitlyn", version, "raw.github.com", "/MixsStar/BoL_Studio/mas
 AutoUpGen = true
 
 player = GetMyHero()
+
+-- AutoWard Start Code
+local wardRange = 600
+local scriptActive = true
+local wardTimer = 0
+local wardSlot = nil
+local wardMatrix = {}
+local wardDetectedFlag = {}
+local lastWard = 0
+wardMatrix[1] = {10000,11326,10012,8924,8078,11186,5925,4911,4025,2781,4031,2842}
+wardMatrix[2] = {2868,3817,4842,5461,4600,6979,9851,8878,9621,10578,11519,7575}
+wardMatrix[3] = {}
+for i = 1, 12 do
+  --Ward present nearby ?
+  wardMatrix[3][i] = false
+  wardDetectedFlag[i] = false
+end
+
+function wardUpdate()
+  for i = 1, 12 do
+    wardDetectedFlag[i] = false
+  end
+  for k = 1, objManager.maxObjects do
+    local object = objManager:GetObject(k)
+    if object ~= nil and (string.find(object.name, "Ward") ~= nil or string.find(object.name, "Wriggle") ~= nil) then
+      for i = 1, 12 do
+        if math.sqrt((wardMatrix[1][i] - object.x)*(wardMatrix[1][i] - object.x) + (wardMatrix[2][i] - object.z)*(wardMatrix[2][i] - object.z)) < 1100 then
+          wardDetectedFlag[i] = true
+          wardMatrix[3][i] = true
+        end
+      end
+    end
+    for i = 1, 12 do
+      if wardDetectedFlag[i] == false then
+        wardMatrix[3][i] = false
+      end
+    end
+  end
+  wardTimer = GetTickCount()
+end
+-- AutoWard End Code
+
 
 aaRange = 650
 qRange = 1250
@@ -103,6 +145,35 @@ function OnTick()
     PrintChat ("<font color='#FFFFFF'>Hitchance 5: Target dashing(~100% hit chance)</font>")
     --AutoCarry.PluginMenu.ranges.HitChanceInfo = false
   end
+
+  if mc.extras.putWard then
+    if GetTickCount() - wardTimer > 10000 then
+      wardUpdate()
+    end 
+
+    if (myHero:CanUseSpell(ITEM_7) == READY and myHero:getItem(ITEM_7).id == 3340) then
+      wardSlot = GetInventorySlotItem(3340)
+    elseif (myHero:CanUseSpell(ITEM_7) == READY and myHero:getItem(ITEM_7).id == 3350) then
+      wardSlot = GetInventorySlotItem(3350)
+    elseif GetInventorySlotItem(2044) ~= nil then
+      wardSlot = GetInventorySlotItem(2044)
+    elseif GetInventorySlotItem(2043) ~= nil then
+      wardSlot = GetInventorySlotItem(2043)
+    else
+      wardSlot = nil
+    end
+
+    for i = 1, 12 do
+      if wardSlot ~= nil and GetTickCount() - lastWard > 2000 then
+        if math.sqrt((wardMatrix[1][i] - player.x)*(wardMatrix[1][i] - player.x) + (wardMatrix[2][i] - player.z)*(wardMatrix[2][i] - player.z)) < 600 and wardMatrix[3][i] == false then
+          CastSpell( wardSlot, wardMatrix[1][i], wardMatrix[2][i] )
+          lastWard = GetTickCount()
+          wardMatrix[3][i] = true
+          break
+        end
+      end
+    end
+  end 
 end
 
 --handles overlay drawing (processing is not recommended here,use onTick() for that)
@@ -145,11 +216,14 @@ local HKE = string.byte("G")
 local HKC = string.byte("T")
 
 function Menu()
-  myConfig = scriptConfig("Caitlyn is.. Awesome - Config", "mixsstarScript")
+  myConfig = scriptConfig("Caitlyn - Config", "mixsstarScript")
   mc = myConfig
   mc:addParam("autoupdategeneral", "AutoUpdate", SCRIPT_PARAM_ONOFF, true)
   mc:addSubMenu("OrbWalk", "orbwalkSubMenu")
-  mc:addSubMenu("Skills and Draws", "draws")  
+  mc:addSubMenu("Skills and Draws", "draws")
+  mc:addSubMenu("Extras", "extras")
+  mc.extras:addParam("putWard", "Automatically put Wards", SCRIPT_PARAM_ONOFF, true)
+  mc.extras:addParam("debug", "Print and Draw Debugs", SCRIPT_PARAM_ONOFF, false)
   mc.draws:addParam("HitChance", "Q - Hitchance", SCRIPT_PARAM_SLICE, 2, 0, 5, 0)
   mc.draws:addParam("HitChanceInfo", "Info - Hitchance", SCRIPT_PARAM_ONOFF, false)
   mc.draws:addParam("sep", "-- Misc Options --", SCRIPT_PARAM_INFO, "")
@@ -168,7 +242,6 @@ function Menu()
   mc.draws:addParam("drawQ", "Draw - Piltover Peacemaker", SCRIPT_PARAM_ONOFF, true)
   mc.draws:addParam("drawR", "Draw - Ace in the Hole", SCRIPT_PARAM_ONOFF, true)
   mc.draws:addParam("drawAA", "Draw - AA Arena", SCRIPT_PARAM_ONOFF, true)
-  mc.draws:addParam("debug", "Print and Draw Debugs", SCRIPT_PARAM_ONOFF, false)
   mc:addParam("version", "Version", SCRIPT_PARAM_INFO, version)
 end
 

@@ -1,5 +1,5 @@
 if myHero.charName ~= "Caitlyn" then return end
-local version = "1.02"
+local version = "1.03"
 
 -------------------------------------
 local REQUIRED_LIBS = {
@@ -90,6 +90,8 @@ function wardUpdate()
 end
 -- AutoWard End Code
 
+blue = false
+PassiveUp = false
 
 aaRange = 650
 qRange = 1250
@@ -176,6 +178,40 @@ function OnTick()
   end 
 end
 
+function OnGainBuff(unit, buff)
+  if unit.isMe then
+    if buff.name == "crestoftheancientgolem" then
+      blue = true
+      if mc.extras.debug then
+        print("You Have the Blue")
+      end
+    end
+    if buff.name == "caitlyheadshot" then
+      PassiveUp = true
+      if mc.extras.debug then
+        print("Your Passive is Active ;D")
+      end
+    end
+  end
+end
+
+function OnLoseBuff(unit, buff)
+  if unit.isMe then
+    if buff.name == "crestoftheancientgolem" then
+      blue = false
+      if mc.extras.debug then
+        print("You Lost the Blue")
+      end
+    end
+    if buff.name == "caitlyheadshot" then
+      PassiveUp = false
+      if mc.extras.debug then
+        print("Your Passive is NOT Active")
+      end
+    end
+  end
+end
+
 --handles overlay drawing (processing is not recommended here,use onTick() for that)
 function OnDraw()
   if not myHero.dead then
@@ -191,6 +227,7 @@ function OnDraw()
 
   end
 end
+
 
 --handles input
 function OnWndMsg(msg,key)
@@ -224,6 +261,7 @@ function Menu()
   mc:addSubMenu("Extras", "extras")
   mc.extras:addParam("putWard", "Automatically put Wards", SCRIPT_PARAM_ONOFF, true)
   mc.extras:addParam("debug", "Print and Draw Debugs", SCRIPT_PARAM_ONOFF, false)
+  mc.extras:addParam("blueQ", "Q - Cast more often when Blue",SCRIPT_PARAM_ONOFF, false)
   mc.draws:addParam("HitChance", "Q - Hitchance", SCRIPT_PARAM_SLICE, 2, 0, 5, 0)
   mc.draws:addParam("HitChanceInfo", "Info - Hitchance", SCRIPT_PARAM_ONOFF, false)
   mc.draws:addParam("sep", "-- Misc Options --", SCRIPT_PARAM_INFO, "")
@@ -260,9 +298,9 @@ function Checks()
 end
 
 function KS()
-  if mc.draws.debug then
-    print("Casting KS()")
-  end
+  --[[if mc.extras.debug then
+  print("Calling KS()")
+  end]]
   for i = 1, heroManager.iCount do
     local Enemy = heroManager:getHero(i)
     if QAble and mc.draws.KSQ then qDmg = getDmg("Q",Enemy,myHero) else qDmg = 0 end
@@ -287,29 +325,32 @@ function CheckRLevel()
 end
 
 function PeacemakerKS()
-  if mc.draws.debug then
-    print("Casting PeaceMakerKS()")
+  if mc.extras.debug then
+    print("Calling PeaceMakerKS()")
   end
   for i, target in pairs(GetEnemyHeroes()) do
     CastPosition,  HitChance,  Position = VP:GetLineCastPosition(Target, 0.632, 90, qRange, 2225, myHero)
-    if QAble and HitChance >= 2 and GetDistance(CastPosition) < qRange then CastSpell(_Q, CastPosition.x, CastPosition.z) end
+    if QAble and blue and blueQ and HitChance >= 1 and GetDistance(CastPosition) < qRange then CastSpell(_Q, CastPosition.x, CastPosition.z) else
+      if QAble and HitChance >= 2 and GetDistance(CastPosition) < qRange then CastSpell(_Q, CastPosition.x, CastPosition.z) end
+    end
   end
 end
 
 function Peacemaker()
-  if mc.draws.debug then
-    print("Casting PeaceMaker()")
+  if mc.extras.debug then
+    print("Calling PeaceMaker()")
   end
   for i, target in pairs(GetEnemyHeroes()) do
     CastPosition,  HitChance,  Position = VP:GetLineCastPosition(Target, 0.632, 90, qRange, 2225, myHero)
-    if QAble and mc.draws.useQ and SOWi:CanMove() and HitChance >= mc.draws.HitChance and GetDistance(CastPosition) < qRange then CastSpell(_Q, CastPosition.x, CastPosition.z)
+    if QAble and mc.draws.useQ and SOWi:CanMove() and HitChance >= mc.draws.HitChance and GetDistance(CastPosition) < qRange then 
+      if mc.extras.debug then print("Casting Q More Often") end CastSpell(_Q, CastPosition.x, CastPosition.z)
     elseif QAble and mc.draws.useQ and HitChance >= mc.draws.HitChance and GetDistance(CastPosition) < qRange then CastSpell(_Q, CastPosition.x, CastPosition.z) end
   end
 end
 
 function Peacemaker2()
-  if mc.draws.debug then
-    print("Casting PeaceMaker2()")
+  if mc.extras.debug then
+    print("Calling PeaceMaker2()")
   end
   for i, target in pairs(GetEnemyHeroes()) do
     CastPosition,  HitChance,  Position = VP:GetLineCastPosition(Target, 0.632, 90, qRange, 2225, myHero)
@@ -319,8 +360,8 @@ function Peacemaker2()
 end
 
 function Trap()
-  if mc.draws.debug then
-    print("Casting Trap()")
+  if mc.extras.debug then
+    print("Calling Trap()")
   end
   for i, target in pairs(GetEnemyHeroes()) do
     CastPosition,  HitChance,  Position = VP:GetLineCastPosition(Target, 1.5, 100, wRange, math.huge, myHero)
@@ -329,8 +370,8 @@ function Trap()
 end
 
 function Dash()
-  if mc.draws.debug then
-    print("Casting Dash()")
+  if mc.extras.debug then
+    print("Calling Dash()")
   end
   if EAble and mc.draws.Dash then
     MPos = Vector(mousePos.x, mousePos.y, mousePos.z)
@@ -342,8 +383,8 @@ function Dash()
 end
 
 function PeacemakerCombo()
-  if mc.draws.debug then
-    print("Casting Combo()")
+  if mc.extras.debug then
+    print("Calling Combo()")
   end
   for i, target in pairs(GetEnemyHeroes()) do
     CastPosition,  HitChance,  Position = VP:GetLineCastPosition(Target, 0.632, 90, qRange, 2225, myHero)
@@ -352,8 +393,8 @@ function PeacemakerCombo()
 end
 
 function Net()
-  if mc.draws.debug then
-    print("Casting Net()")
+  if mc.extras.debug then
+    print("Calling Net()")
   end
   for i, target in pairs(GetEnemyHeroes()) do
     CastPosition,  HitChance,  Position = VP:GetLineCastPosition(Target, 0.1, 80, eRange, 1960, myHero)

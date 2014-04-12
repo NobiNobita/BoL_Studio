@@ -1,9 +1,11 @@
 if myHero.charName ~= "Caitlyn" then return end
-local version = "1.04"
+local version = "1.05"
 
 -------------------------------------
 local REQUIRED_LIBS = {
   ["SourceLib"] = "https://bitbucket.org/TheRealSource/public/raw/master/common/SourceLib.lua",
+  ["VPrediction"] = "https://bitbucket.org/honda7/bol/raw/master/Common/VPrediction.lua",
+  ["SOW"] = "https://bitbucket.org/honda7/bol/raw/master/Common/SOW.lua",
 }
 
 local DOWNLOADING_LIBS, DOWNLOAD_COUNT = false, 0
@@ -33,12 +35,12 @@ if DOWNLOADING_LIBS then return end
 
 -------------------------------------
 
-local libDownloader = Require("MixsStar's Caitlyn")
+--[[local libDownloader = Require("MixsStar's Caitlyn")
 libDownloader:Add("VPrediction", "https://bitbucket.org/honda7/bol/raw/master/Common/VPrediction.lua")
 libDownloader:Add("SOW",         "https://bitbucket.org/honda7/bol/raw/master/Common/SOW.lua")
 libDownloader:Check()
 
-if libDownloader.downloadNeeded then return end
+if libDownloader.downloadNeeded then return end]]
 -------------------------------------
 LU = LazyUpdater("Caitlyn", version, "raw.github.com", "/MixsStar/BoL_Studio/master/Scripts/Caitlyn.lua", tostring(SCRIPT_PATH .. GetCurrentEnv().FILE_NAME))
 

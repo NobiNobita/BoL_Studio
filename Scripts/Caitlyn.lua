@@ -271,7 +271,7 @@ function Menu()
   mc.draws:addParam("blueQ", "Q - Cast more often when Blue",SCRIPT_PARAM_ONOFF, false)
   mc.draws:addParam("useW", "Use - Yordle Snap Trap", SCRIPT_PARAM_ONOFF, false)
   mc.draws:addParam("Dash", "Dash - 90 Caliber Net", SCRIPT_PARAM_ONKEYDOWN, false, HKE)
-  mc.draws:addParam("autoEGap", "Dash - Net Auto Gap", SCRIPT_PARAM_ONOFF, true)
+  mc.draws:addParam("autoEGap", "Net Auto Gap", SCRIPT_PARAM_ONOFF, true)
   mc.draws:addParam("autoEDistance", "Auto Gap - Distance to Auto Gap", SCRIPT_PARAM_SLICE, 350, 250, 800, 0)
   mc.draws:addParam("Combo", "Combo - Net Peacemaker", SCRIPT_PARAM_ONKEYDOWN, false, HKC)
   mc.draws:addParam("sep1", "-- KS Options --", SCRIPT_PARAM_INFO, "")
@@ -346,11 +346,14 @@ function Peacemaker()
   end
   for i, target in pairs(GetEnemyHeroes()) do
     CastPosition,  HitChance,  Position = VP:GetLineCastPosition(Target, 0.632, 90, qRange, 2225, myHero)
-    if QAble and mc.draws.useQ and SOWi:CanMove() and HitChance >= mc.draws.HitChance and GetDistance(CastPosition) < qRange then 
-      if QAble and blue and mc.draws.blueQ and HitChance >= 1 and GetDistance(CastPosition) < qRange then
-      if mc.extras.debug then print("Casting Q More Often") end 
-       CastSpell(_Q, CastPosition.x, CastPosition.z) elseCastSpell(_Q, CastPosition.x, CastPosition.z)
-      elseif QAble and mc.draws.useQ and HitChance >= mc.draws.HitChance and GetDistance(CastPosition) < qRange then CastSpell(_Q, CastPosition.x, CastPosition.z) end
+    if QAble and mc.draws.useQ and SOWi:CanMove() and HitChance >= mc.draws.HitChance and GetDistance(CastPosition) < qRange then
+      if blue and mc.draws.blueQ and HitChance >= 1 then
+        if mc.extras.debug then print("Casting Q More Often") end 
+        CastSpell(_Q, CastPosition.x, CastPosition.z) 
+      else
+        if HitChance >= mc.draws.HitChance then CastSpell(_Q, CastPosition.x, CastPosition.z) 
+        end
+      end
     end
   end
 end

@@ -132,8 +132,9 @@ function OnTick()
     if mc.draws.useW then Trap() end
     if mc.draws.autoEGap then AutoEGap() end
     if mc.draws.Combo then Net() PeacemakerCombo() end
+    if mc.draws.KS then KS() end
   end
-  if mc.draws.KS then KS() end
+
   if mc.draws.Dash then Dash() end
 
   --
@@ -262,10 +263,10 @@ function Menu()
   mc:addSubMenu("Extras", "extras")
   mc.extras:addParam("putWard", "Automatically put Wards", SCRIPT_PARAM_ONOFF, true)
   mc.extras:addParam("debug", "Print and Draw Debugs", SCRIPT_PARAM_ONOFF, false)
-  mc.extras:addParam("blueQ", "Q - Cast more often when Blue",SCRIPT_PARAM_ONOFF, false)
   mc.draws:addParam("HitChance", "Q - Hitchance", SCRIPT_PARAM_SLICE, 2, 0, 5, 0)
   mc.draws:addParam("HitChanceInfo", "Info - Hitchance", SCRIPT_PARAM_ONOFF, false)
   mc.draws:addParam("sep", "-- Misc Options --", SCRIPT_PARAM_INFO, "")
+  mc.draws:addParam("blueQ", "Q - Cast more often when Blue",SCRIPT_PARAM_ONOFF, false)
   mc.draws:addParam("useW", "Use - Yordle Snap Trap", SCRIPT_PARAM_ONOFF, false)
   mc.draws:addParam("Dash", "Dash - 90 Caliber Net", SCRIPT_PARAM_ONKEYDOWN, false, HKE)
   mc.draws:addParam("autoEGap", "Dash - Net Auto Gap", SCRIPT_PARAM_ONOFF, true)
@@ -344,7 +345,7 @@ function Peacemaker()
   for i, target in pairs(GetEnemyHeroes()) do
     CastPosition,  HitChance,  Position = VP:GetLineCastPosition(Target, 0.632, 90, qRange, 2225, myHero)
     if QAble and mc.draws.useQ and SOWi:CanMove() and HitChance >= mc.draws.HitChance and GetDistance(CastPosition) < qRange then 
-      if QAble and blue and blueQ and HitChance >= 1 and GetDistance(CastPosition) < qRange then
+      if QAble and blue and mc.draws.blueQ and HitChance >= 1 and GetDistance(CastPosition) < qRange then
       if mc.extras.debug then print("Casting Q More Often") end 
        CastSpell(_Q, CastPosition.x, CastPosition.z) elseCastSpell(_Q, CastPosition.x, CastPosition.z)
       elseif QAble and mc.draws.useQ and HitChance >= mc.draws.HitChance and GetDistance(CastPosition) < qRange then CastSpell(_Q, CastPosition.x, CastPosition.z) end

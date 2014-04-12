@@ -1,5 +1,5 @@
 if myHero.charName ~= "Caitlyn" then return end
-local version = "1.03"
+local version = "1.04"
 
 -------------------------------------
 local REQUIRED_LIBS = {
@@ -130,6 +130,7 @@ function OnTick()
       Peacemaker2()
     end
     if mc.draws.useW then Trap() end
+    if mc.draws.autoEGap then AutoEGap() end
     if mc.draws.Combo then Net() PeacemakerCombo() end
   end
   if mc.draws.KS then KS() end
@@ -267,6 +268,8 @@ function Menu()
   mc.draws:addParam("sep", "-- Misc Options --", SCRIPT_PARAM_INFO, "")
   mc.draws:addParam("useW", "Use - Yordle Snap Trap", SCRIPT_PARAM_ONOFF, false)
   mc.draws:addParam("Dash", "Dash - 90 Caliber Net", SCRIPT_PARAM_ONKEYDOWN, false, HKE)
+  mc.draws:addParam("autoEGap", "Dash - Net Auto Gap", SCRIPT_PARAM_ONOFF, true)
+  mc.draws:addParam("autoEDistance", "Auto Gap - Distance to Auto Gap", SCRIPT_PARAM_SLICE, 350, 250, 800, 0)
   mc.draws:addParam("Combo", "Combo - Net Peacemaker", SCRIPT_PARAM_ONKEYDOWN, false, HKC)
   mc.draws:addParam("sep1", "-- KS Options --", SCRIPT_PARAM_INFO, "")
   mc.draws:addParam("KS", "Enable - Killsteal", SCRIPT_PARAM_ONOFF, true)
@@ -330,9 +333,7 @@ function PeacemakerKS()
   end
   for i, target in pairs(GetEnemyHeroes()) do
     CastPosition,  HitChance,  Position = VP:GetLineCastPosition(Target, 0.632, 90, qRange, 2225, myHero)
-    if QAble and blue and blueQ and HitChance >= 1 and GetDistance(CastPosition) < qRange then CastSpell(_Q, CastPosition.x, CastPosition.z) else
-      if QAble and HitChance >= 2 and GetDistance(CastPosition) < qRange then CastSpell(_Q, CastPosition.x, CastPosition.z) end
-    end
+    if QAble and HitChance >= 2 and GetDistance(CastPosition) < qRange then CastSpell(_Q, CastPosition.x, CastPosition.z) end
   end
 end
 
@@ -343,8 +344,11 @@ function Peacemaker()
   for i, target in pairs(GetEnemyHeroes()) do
     CastPosition,  HitChance,  Position = VP:GetLineCastPosition(Target, 0.632, 90, qRange, 2225, myHero)
     if QAble and mc.draws.useQ and SOWi:CanMove() and HitChance >= mc.draws.HitChance and GetDistance(CastPosition) < qRange then 
-      if mc.extras.debug then print("Casting Q More Often") end CastSpell(_Q, CastPosition.x, CastPosition.z)
-    elseif QAble and mc.draws.useQ and HitChance >= mc.draws.HitChance and GetDistance(CastPosition) < qRange then CastSpell(_Q, CastPosition.x, CastPosition.z) end
+      if QAble and blue and blueQ and HitChance >= 1 and GetDistance(CastPosition) < qRange then
+      if mc.extras.debug then print("Casting Q More Often") end 
+       CastSpell(_Q, CastPosition.x, CastPosition.z) elseCastSpell(_Q, CastPosition.x, CastPosition.z)
+      elseif QAble and mc.draws.useQ and HitChance >= mc.draws.HitChance and GetDistance(CastPosition) < qRange then CastSpell(_Q, CastPosition.x, CastPosition.z) end
+    end
   end
 end
 
@@ -400,4 +404,15 @@ function Net()
     CastPosition,  HitChance,  Position = VP:GetLineCastPosition(Target, 0.1, 80, eRange, 1960, myHero)
     if EAble and HitChance >= mc.draws.HitChance and GetDistance(CastPosition) < eRange then CastSpell(_E, CastPosition.x, CastPosition.z) end
   end
+end
+
+function AutoEGap()
+  if mc.extras.debug then
+    print("Calling AutoEGap()")
+  end
+  for i, target in pairs(GetEnemyHeroes()) do
+    CastPosition,  HitChance,  Position = VP:GetLineCastPosition(Target, 0.1, 80, mc.draws.autoEDistante, 1960, myHero)
+    if EAble and GetDistance(target) <= mc.draws.autoEDistance then CastSpell(_E, CastPosition.x, CastPosition.z) end
+  end
+
 end

@@ -1,5 +1,5 @@
 if myHero.charName ~= "Caitlyn" then return end
-local version = "1.06"
+local version = "1.07"
 
 -------------------------------------
 local REQUIRED_LIBS = {
@@ -95,7 +95,7 @@ end
 blue = false
 PassiveUp = false
 
-aaRange = 650
+aaRange = 650 -- dunno why but when drawing it draws it smaller...
 qRange = 1250
 wRange = 800
 eRange = 950
@@ -107,6 +107,7 @@ local qDmg, eDmg, rDmg, DmgRange
 
 -- called once when the script is loaded
 function OnLoad()
+  EnemyMinions = minionManager(MINION_ENEMY, 720, myHero, MINION_SORT_MAXHEALTH_DEC)
   Menu()
   VP = VPrediction()
   AutoUpGen = mc.autoupdategeneral
@@ -132,14 +133,16 @@ function OnTick()
       Peacemaker2()
     end
     if mc.draws.useW then Trap() end
-    if mc.draws.autoEGap then AutoEGap() end
-    if mc.draws.Combo then Net() PeacemakerCombo() end
+    if mc.draws.Combo then PeacemakerCombo() end
     if mc.draws.KS then KS() end
   end
-
+  if mc.draws.autoEGapDist then AutoEGap() end
   if mc.draws.Dash then Dash() end
 
   --
+  if mc.draws.farmEnabled and (myHero.mana / myHero.maxMana * 100) >= mc.draws.ManaCheck then
+    Farm()
+  end
 
   -- Infos
   if mc.draws.HitChanceInfo then
@@ -226,7 +229,7 @@ function OnDraw()
       DrawCircle(myHero.x, myHero.y, myHero.z, rRange, 0x990000)
     end
     if mc.draws.drawAA then
-      DrawCircle(myHero.x, myHero.y, myHero.z, aaRange, 0x990000)
+      DrawCircle(myHero.x, myHero.y, myHero.z, 720, 0x990000)
     end
 
   end
@@ -261,32 +264,58 @@ function Menu()
   mc = myConfig
   mc:addParam("autoupdategeneral", "AutoUpdate", SCRIPT_PARAM_ONOFF, true)
   mc:addSubMenu("OrbWalk", "orbwalkSubMenu")
+
+  --[[Draws General]]
   mc:addSubMenu("Skills and Draws", "draws")
-  mc:addSubMenu("Extras", "extras")
-  mc.extras:addParam("putWard", "Automatically put Wards", SCRIPT_PARAM_ONOFF, true)
-  mc.extras:addParam("debug", "Print and Draw Debugs", SCRIPT_PARAM_ONOFF, false)
   mc.draws:addParam("HitChance", "Q - Hitchance", SCRIPT_PARAM_SLICE, 2, 0, 5, 0)
   mc.draws:addParam("HitChanceInfo", "Info - Hitchance", SCRIPT_PARAM_ONOFF, false)
+
+  --[[Misc Options]]
   mc.draws:addParam("sep", "-- Misc Options --", SCRIPT_PARAM_INFO, "")
   mc.draws:addParam("blueQ", "Q - Cast more often when Blue",SCRIPT_PARAM_ONOFF, false)
   mc.draws:addParam("useW", "Use - Yordle Snap Trap", SCRIPT_PARAM_ONOFF, false)
   mc.draws:addParam("Dash", "Dash - 90 Caliber Net", SCRIPT_PARAM_ONKEYDOWN, false, HKE)
-  mc.draws:addParam("autoEGap", "Net Auto Gap", SCRIPT_PARAM_ONOFF, true)
-  mc.draws:addParam("autoEDistance", "Auto Gap - Distance to Auto Gap", SCRIPT_PARAM_SLICE, 350, 250, 800, 0)
+
+  --[[Auto Anti-Gap Closer]]
+  mc.draws:addParam("sep", "-- Auto Anti-Gap Closer Options --", SCRIPT_PARAM_INFO, "")
+  mc.draws:addParam("autoEGapDist", "Net Auto Anti-Gap based on Distance", SCRIPT_PARAM_ONOFF, true)
+  mc.draws:addParam("autoEDistance", "Auto Gap - Distance to Auto Gap", SCRIPT_PARAM_SLICE, 200, 10, 800, 0)
+  --mc.draws:addParam("autoEGapDash", "Net Auto Anti-Gap only if Dash", SCRIPT_PARAM_ONOFF, false)
+  --mc.draws:addParam("autoEGapChamps", "Net Auto Anti-Gap only certain Champs", SCRIPT_PARAM_ONOFF, false)
   mc.draws:addParam("Combo", "Combo - Net Peacemaker", SCRIPT_PARAM_ONKEYDOWN, false, HKC)
+
+  --[[KS Options]]
   mc.draws:addParam("sep1", "-- KS Options --", SCRIPT_PARAM_INFO, "")
   mc.draws:addParam("KS", "Enable - Killsteal", SCRIPT_PARAM_ONOFF, true)
   mc.draws:addParam("Killshot", "Killshot - Ace in the Hole", SCRIPT_PARAM_ONKEYDOWN, false, HKR)
   mc.draws:addParam("KSQ", "Use - Piltover Peacemaker", SCRIPT_PARAM_ONOFF, true)
-  mc.draws:addParam("sep2", "-- Autocarry Options --", SCRIPT_PARAM_INFO, "") 
+
+  --[[Orbwalk Options]]
+  mc.draws:addParam("sep2", "-- Orbwalk Options --", SCRIPT_PARAM_INFO, "") 
   mc.draws:addParam("useQ", "Use - Piltover Peacemaker", SCRIPT_PARAM_ONOFF, true)
+
+  --[[Mixed Mode Options]]
   mc.draws:addParam("sep3", "-- Mixed Mode Options --", SCRIPT_PARAM_INFO, "")
   mc.draws:addParam("useQ2", "Use - Piltover Peacemaker", SCRIPT_PARAM_ONOFF, false)
+
+  --[[Farming]]
+  mc.draws:addParam("farm", "-- Farming Options --", SCRIPT_PARAM_INFO, "")
+  mc.draws:addParam("farmUseQ",  "Use Q", SCRIPT_PARAM_ONOFF, true)
+  mc.draws:addParam("ManaCheck", "Don't farm if mana < %", SCRIPT_PARAM_SLICE, 10, 0, 100)
+  mc.draws:addParam("farmEnabled", "Farm!", SCRIPT_PARAM_ONKEYDOWN, false,   string.byte("V"))
+
+  --[[Drawing Options]]
   mc.draws:addParam("sep4", "-- Drawing Options --", SCRIPT_PARAM_INFO, "")
   mc.draws:addParam("drawQ", "Draw - Piltover Peacemaker", SCRIPT_PARAM_ONOFF, true)
   mc.draws:addParam("drawR", "Draw - Ace in the Hole", SCRIPT_PARAM_ONOFF, true)
   mc.draws:addParam("drawAA", "Draw - AA Arena", SCRIPT_PARAM_ONOFF, true)
   mc:addParam("version", "Version", SCRIPT_PARAM_INFO, version)
+
+  --[[Extras]]
+  mc:addSubMenu("Extras", "extras")
+  mc.extras:addParam("putWard", "Automatically put Wards", SCRIPT_PARAM_ONOFF, true)
+  mc.extras:addParam("debug", "Print and Draw Debugs", SCRIPT_PARAM_ONOFF, false)
+
 end
 
 function OrbWalk()
@@ -398,7 +427,7 @@ function PeacemakerCombo()
   end
   for i, target in pairs(GetEnemyHeroes()) do
     CastPosition,  HitChance,  Position = VP:GetLineCastPosition(Target, 0.632, 90, qRange, 2225, myHero)
-    if QAble and not EAble and HitChance >= 2 and GetDistance(CastPosition) < qRange then CastSpell(_Q, CastPosition.x, CastPosition.z) end
+    if QAble and EAble and HitChance >= 1 and GetDistance(CastPosition) < qRange then CastSpell(_E, CastPosition.x, CastPosition.z) CastSpell(_Q, CastPosition.x, CastPosition.z) end
   end
 end
 
@@ -413,12 +442,74 @@ function Net()
 end
 
 function AutoEGap()
-  if mc.extras.debug then
-    print("Calling AutoEGap()")
-  end
+  --[[if mc.extras.debug then
+  print("Calling AutoEGap()")
+  end]]
   for i, target in pairs(GetEnemyHeroes()) do
-    CastPosition,  HitChance,  Position = VP:GetLineCastPosition(Target, 0.1, 80, mc.draws.autoEDistante, 1960, myHero)
-    if EAble and GetDistance(target) <= mc.draws.autoEDistance then CastSpell(_E, CastPosition.x, CastPosition.z) end
+    CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 0.1, 80, eRange, 1960, myHero)
+    if EAble and GetDistance(target) <= mc.draws.autoEDistance and not target.dead then CastSpell(_E, CastPosition.x, CastPosition.z) end
   end
 
+end
+
+function Farm()
+  EnemyMinions:update()
+  if mc.draws.farmUseQ then
+    FarmQ()
+  end
+end
+
+function FarmQ()
+  if (myHero:CanUseSpell(_Q) == READY) and #EnemyMinions.objects > 0 then
+    if GetMaxDistMinion() < qRange then 
+      local QPos = GetBestQPositionFarm()
+      if QPos then
+        CastQFarm(QPos)
+      end
+    end
+  end
+end
+
+function GetBestQPositionFarm()
+  local MaxQPos 
+  local MaxQ = 0
+  for i, minion in pairs(EnemyMinions.objects) do
+    local hitQ = CountMinionsHit(minion)
+    if hitQ > MaxQ or MaxQPos == nil then
+      MaxQPos = minion
+      MaxQ = hitQ
+    end
+  end
+
+  if MaxQPos then
+    return MaxQPos
+  else
+    return nil
+  end
+end
+
+function CastQFarm(to)
+  CastSpell(_Q, to.x, to.z)
+end
+
+function GetMaxDistMinion()
+  local max = -1
+  for i, minion in ipairs(EnemyMinions.objects) do
+    if GetDistance(minion) > max then
+      max = GetDistance(minion)
+    end
+  end
+  return max
+end
+
+function CountMinionsHit(QPos)
+  local LineEnd = Vector(myHero) + qRange * (Vector(QPos) - Vector(myHero)):normalized()
+  local n = 0
+  for i, minion in pairs(EnemyMinions.objects) do
+    local pointSegment, pointLine, isOnSegment = VectorPointProjectionOnLineSegment(Vector(myHero), LineEnd, minion)  
+    if isOnSegment and GetDistance(minion, pointSegment) <= 90*1.25 then
+      n = n + 1
+    end
+  end
+  return n
 end

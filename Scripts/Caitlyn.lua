@@ -1,11 +1,11 @@
 if myHero.charName ~= "Caitlyn" then return end
-local version = "1.07"
+local version = "1.08"
 
 -------------------------------------
 local REQUIRED_LIBS = {
-  ["SourceLib"] = "https://bitbucket.org/TheRealSource/public/raw/master/common/SourceLib.lua",
-  ["VPrediction"] = "https://bitbucket.org/honda7/bol/raw/master/Common/VPrediction.lua",
-  ["SOW"] = "https://bitbucket.org/honda7/bol/raw/master/Common/SOW.lua",
+  ["SourceLib"] = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua",
+  ["VPrediction"] = "https://raw.github.com/honda7/BoL/master/Common/VPrediction.lua",
+  ["SOW"] = "https://raw.github.com/honda7/BoL/master/Common/SOW.lua",
 }
 
 local DOWNLOADING_LIBS, DOWNLOAD_COUNT = false, 0
@@ -30,17 +30,10 @@ for DOWNLOAD_LIB_NAME, DOWNLOAD_LIB_URL in pairs(REQUIRED_LIBS) do
 end
 
 if DOWNLOADING_LIBS then return end
-
-
-
 -------------------------------------
 
---[[local libDownloader = Require("MixsStar's Caitlyn")
-libDownloader:Add("VPrediction", "https://bitbucket.org/honda7/bol/raw/master/Common/VPrediction.lua")
-libDownloader:Add("SOW",         "https://bitbucket.org/honda7/bol/raw/master/Common/SOW.lua")
-libDownloader:Check()
 
-if libDownloader.downloadNeeded then return end]]
+
 -------------------------------------
 LU = LazyUpdater("Caitlyn", version, "raw.github.com", "/MixsStar/BoL_Studio/master/Scripts/Caitlyn.lua", tostring(SCRIPT_PATH .. GetCurrentEnv().FILE_NAME))
 

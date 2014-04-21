@@ -35,7 +35,8 @@ if DOWNLOADING_LIBS then return end
 
 
 -------------------------------------
-LU = LazyUpdater("Caitlyn", version, "raw.github.com", "/MixsStar/BoL_Studio/master/Scripts/Caitlyn.lua", tostring(SCRIPT_PATH .. GetCurrentEnv().FILE_NAME))
+
+SU = SourceUpdater("Caitlyn", version, "raw.github.com", "/MixsStar/BoL_Studio/master/Scripts/Caitlyn.lua", tostring(SCRIPT_PATH .. GetCurrentEnv().FILE_NAME))
 
 
 
@@ -108,7 +109,7 @@ function OnLoad()
   VP = VPrediction()
   AutoUpGen = mc.autoupdategeneral
   if AutoUpGen then
-    LU:CheckUpdate()
+   SU:CheckUpdate()
   end
 
   OrbWalk()

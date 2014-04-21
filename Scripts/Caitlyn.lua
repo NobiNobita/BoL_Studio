@@ -1,5 +1,5 @@
 if myHero.charName ~= "Caitlyn" then return end
-local version = "1.09"
+local version = "1.10"
 
 -------------------------------------
 local REQUIRED_LIBS = {

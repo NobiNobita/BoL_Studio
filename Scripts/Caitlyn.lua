@@ -1,5 +1,5 @@
 if myHero.charName ~= "Caitlyn" then return end
-local version = "1.08"
+local version = "1.09"
 
 -------------------------------------
 local REQUIRED_LIBS = {
@@ -41,6 +41,9 @@ LU = LazyUpdater("Caitlyn", version, "raw.github.com", "/MixsStar/BoL_Studio/mas
 
 --A basic BoL template for the Eclipse Lua Development Kit
 AutoUpGen = true
+
+local spellExpired = true
+local informationTable = {}
 
 player = GetMyHero()
 
@@ -151,7 +154,7 @@ function OnTick()
   if mc.extras.putWard then
     if GetTickCount() - wardTimer > 10000 then
       wardUpdate()
-    end 
+    end
 
     if (myHero:CanUseSpell(ITEM_7) == READY and myHero:getItem(ITEM_7).id == 3340) then
       wardSlot = GetInventorySlotItem(3340)
@@ -175,7 +178,7 @@ function OnTick()
         end
       end
     end
-  end 
+  end
 end
 
 function OnGainBuff(unit, buff)
@@ -186,7 +189,7 @@ function OnGainBuff(unit, buff)
         print("You Have the Blue")
       end
     end
-    if buff.name == "caitlyheadshot" then
+    if buff.name == "caitlynheadshot" then
       PassiveUp = true
       if mc.extras.debug then
         print("Your Passive is Active ;D")
@@ -203,7 +206,7 @@ function OnLoseBuff(unit, buff)
         print("You Lost the Blue")
       end
     end
-    if buff.name == "caitlyheadshot" then
+    if buff.name == "caitlynheadshot" then
       PassiveUp = false
       if mc.extras.debug then
         print("Your Passive is NOT Active")
@@ -243,8 +246,61 @@ function OnSendChat(txt)
 end
 
 -- listens to spell
-function OnProcessSpell(owner,spell)
-
+function OnProcessSpell(unit, spell)
+  if not mc.draws.autoEGapDist then return end
+  local jarvanAddition = unit.charName == "JarvanIV" and unit:CanUseSpell(_Q) ~= READY and _R or _Q -- Did not want to break the table below.
+  local isAGapcloserUnit = {
+    --        ['Ahri']        = {true, spell = _R, range = 450,   projSpeed = 2200},
+    ['Aatrox']      = {true, spell = _Q,                  range = 1000,  projSpeed = 1200, },
+    ['Akali']       = {true, spell = _R,                  range = 800,   projSpeed = 2200, }, -- Targeted ability
+    ['Alistar']     = {true, spell = _W,                  range = 650,   projSpeed = 2000, }, -- Targeted ability
+    ['Diana']       = {true, spell = _R,                  range = 825,   projSpeed = 2000, }, -- Targeted ability
+    ['Gragas']      = {true, spell = _E,                  range = 600,   projSpeed = 2000, },
+    ['Graves']      = {true, spell = _E,                  range = 425,   projSpeed = 2000, exeption = true },
+    ['Hecarim']     = {true, spell = _R,                  range = 1000,  projSpeed = 1200, },
+    ['Irelia']      = {true, spell = _Q,                  range = 650,   projSpeed = 2200, }, -- Targeted ability
+    ['JarvanIV']    = {true, spell = jarvanAddition,      range = 770,   projSpeed = 2000, }, -- Skillshot/Targeted ability
+    ['Jax']         = {true, spell = _Q,                  range = 700,   projSpeed = 2000, }, -- Targeted ability
+    ['Jayce']       = {true, spell = 'JayceToTheSkies',   range = 600,   projSpeed = 2000, }, -- Targeted ability
+    ['Khazix']      = {true, spell = _E,                  range = 900,   projSpeed = 2000, },
+    ['Leblanc']     = {true, spell = _W,                  range = 600,   projSpeed = 2000, },
+    ['LeeSin']      = {true, spell = 'blindmonkqtwo',     range = 1300,  projSpeed = 1800, },
+    ['Leona']       = {true, spell = _E,                  range = 900,   projSpeed = 2000, },
+    ['Malphite']    = {true, spell = _R,                  range = 1000,  projSpeed = 1500 + unit.ms},
+    ['Maokai']      = {true, spell = _Q,                  range = 600,   projSpeed = 1200, }, -- Targeted ability
+    ['MonkeyKing']  = {true, spell = _E,                  range = 650,   projSpeed = 2200, }, -- Targeted ability
+    ['Pantheon']    = {true, spell = _W,                  range = 600,   projSpeed = 2000, }, -- Targeted ability
+    ['Poppy']       = {true, spell = _E,                  range = 525,   projSpeed = 2000, }, -- Targeted ability
+    --['Quinn']       = {true, spell = _E,                  range = 725,   projSpeed = 2000, }, -- Targeted ability
+    ['Renekton']    = {true, spell = _E,                  range = 450,   projSpeed = 2000, },
+    ['Sejuani']     = {true, spell = _Q,                  range = 650,   projSpeed = 2000, },
+    ['Shen']        = {true, spell = _E,                  range = 575,   projSpeed = 2000, },
+    ['Tristana']    = {true, spell = _W,                  range = 900,   projSpeed = 2000, },
+    ['Tryndamere']  = {true, spell = 'Slash',             range = 650,   projSpeed = 1450, },
+    ['XinZhao']     = {true, spell = _E,                  range = 650,   projSpeed = 2000, }, -- Targeted ability
+  }
+  if unit.type == 'obj_AI_Hero' and unit.team == TEAM_ENEMY and isAGapcloserUnit[unit.charName] and GetDistance(unit) < 2000 and spell ~= nil then
+  --print('1Gapcloser: ',unit.charName, ' Target: ', (spell.target ~= nil and spell.target.name or 'NONE'), " ", spell.name, " ", spell.projectileID)
+    if spell.name == (type(isAGapcloserUnit[unit.charName].spell) == 'number' and unit:GetSpellData(isAGapcloserUnit[unit.charName].spell).name or isAGapcloserUnit[unit.charName].spell) then
+      --print('2Gapcloser: ',unit.charName, ' Target: ', (spell.target ~= nil and spell.target.name or 'NONE'), " ", spell.name, " ", spell.projectileID)
+    if spell.target ~= nil and spell.target.name == myHero.name or isAGapcloserUnit[unit.charName].spell == 'blindmonkqtwo' then
+        --print('3Gapcloser: ',unit.charName, ' Target: ', (spell.target ~= nil and spell.target.name or 'NONE'), " ", spell.name, " ", spell.projectileID)
+        CastSpell(_E, unit)
+      else
+    --print('NOGapcloser: ',unit.charName, ' Target: ', (spell.target ~= nil and spell.target.name or 'NONE'), " ", spell.name, " ", spell.projectileID)
+        spellExpired = false
+        informationTable = {
+          spellSource = unit,
+          spellCastedTick = GetTickCount(),
+          spellStartPos = Point(spell.startPos.x, spell.startPos.z),
+          spellEndPos = Point(spell.endPos.x, spell.endPos.z),
+          spellRange = isAGapcloserUnit[unit.charName].range,
+          spellSpeed = isAGapcloserUnit[unit.charName].projSpeed,
+          spellIsAnExpetion = isAGapcloserUnit[unit.charName].exeption or false,
+        }
+      end
+    end
+  end
 end
 
 -- function to declare the menu
@@ -271,11 +327,7 @@ function Menu()
 
   --[[Auto Anti-Gap Closer]]
   mc.draws:addParam("sep", "-- Auto Anti-Gap Closer Options --", SCRIPT_PARAM_INFO, "")
-  mc.draws:addParam("autoEGapDist", "Net Auto Anti-Gap based on Distance", SCRIPT_PARAM_ONOFF, true)
-  mc.draws:addParam("autoEDistance", "Auto Gap - Distance to Auto Gap", SCRIPT_PARAM_SLICE, 200, 10, 800, 0)
-  --mc.draws:addParam("autoEGapDash", "Net Auto Anti-Gap only if Dash", SCRIPT_PARAM_ONOFF, false)
-  --mc.draws:addParam("autoEGapChamps", "Net Auto Anti-Gap only certain Champs", SCRIPT_PARAM_ONOFF, false)
-  mc.draws:addParam("Combo", "Combo - Net Peacemaker", SCRIPT_PARAM_ONKEYDOWN, false, HKC)
+  mc.draws:addParam("autoEGapDist", "Net Auto Anti-Gap Closers", SCRIPT_PARAM_ONOFF, true)
 
   --[[KS Options]]
   mc.draws:addParam("sep1", "-- KS Options --", SCRIPT_PARAM_INFO, "")
@@ -284,7 +336,7 @@ function Menu()
   mc.draws:addParam("KSQ", "Use - Piltover Peacemaker", SCRIPT_PARAM_ONOFF, true)
 
   --[[Orbwalk Options]]
-  mc.draws:addParam("sep2", "-- Orbwalk Options --", SCRIPT_PARAM_INFO, "") 
+  mc.draws:addParam("sep2", "-- Orbwalk Options --", SCRIPT_PARAM_INFO, "")
   mc.draws:addParam("useQ", "Use - Piltover Peacemaker", SCRIPT_PARAM_ONOFF, true)
 
   --[[Mixed Mode Options]]
@@ -370,10 +422,10 @@ function Peacemaker()
     CastPosition,  HitChance,  Position = VP:GetLineCastPosition(Target, 0.632, 90, qRange, 2225, myHero)
     if QAble and mc.draws.useQ and SOWi:CanMove() and HitChance >= mc.draws.HitChance and GetDistance(CastPosition) < qRange then
       if blue and mc.draws.blueQ and HitChance >= 1 then
-        if mc.extras.debug then print("Casting Q More Often") end 
-        CastSpell(_Q, CastPosition.x, CastPosition.z) 
+        if mc.extras.debug then print("Casting Q More Often") end
+        CastSpell(_Q, CastPosition.x, CastPosition.z)
       else
-        if HitChance >= mc.draws.HitChance then CastSpell(_Q, CastPosition.x, CastPosition.z) 
+        if HitChance >= mc.draws.HitChance then CastSpell(_Q, CastPosition.x, CastPosition.z)
         end
       end
     end
@@ -435,14 +487,26 @@ function Net()
 end
 
 function AutoEGap()
-  --[[if mc.extras.debug then
-  print("Calling AutoEGap()")
-  end]]
-  for i, target in pairs(GetEnemyHeroes()) do
-    CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 0.1, 80, eRange, 1960, myHero)
-    if EAble and GetDistance(target) <= mc.draws.autoEDistance and not target.dead then CastSpell(_E, CastPosition.x, CastPosition.z) end
-  end
+  if myHero:CanUseSpell(_E) == READY then
+    if mc.draws.autoEGapDist then
+      if not spellExpired and (GetTickCount() - informationTable.spellCastedTick) <= (informationTable.spellRange/informationTable.spellSpeed)*1000 then
+        local spellDirection     = (informationTable.spellEndPos - informationTable.spellStartPos):normalized()
+        local spellStartPosition = informationTable.spellStartPos + spellDirection
+        local spellEndPosition   = informationTable.spellStartPos + spellDirection * informationTable.spellRange
+        local heroPosition = Point(myHero.x, myHero.z)
 
+        local lineSegment = LineSegment(Point(spellStartPosition.x, spellStartPosition.y), Point(spellEndPosition.x, spellEndPosition.y))
+        --lineSegment:draw(ARGB(255, 0, 255, 0), 70)
+
+        if lineSegment:distance(heroPosition) <= (not informationTable.spellIsAnExpetion and 65 or 200) then
+          CastSpell(_E, informationTable.spellSource)
+        end
+      else
+        spellExpired = true
+        informationTable = {}
+      end
+    end
+  end
 end
 
 function Farm()
@@ -454,7 +518,7 @@ end
 
 function FarmQ()
   if (myHero:CanUseSpell(_Q) == READY) and #EnemyMinions.objects > 0 then
-    if GetMaxDistMinion() < qRange then 
+    if GetMaxDistMinion() < qRange then
       local QPos = GetBestQPositionFarm()
       if QPos then
         CastQFarm(QPos)
@@ -464,7 +528,7 @@ function FarmQ()
 end
 
 function GetBestQPositionFarm()
-  local MaxQPos 
+  local MaxQPos
   local MaxQ = 0
   for i, minion in pairs(EnemyMinions.objects) do
     local hitQ = CountMinionsHit(minion)
@@ -499,7 +563,7 @@ function CountMinionsHit(QPos)
   local LineEnd = Vector(myHero) + qRange * (Vector(QPos) - Vector(myHero)):normalized()
   local n = 0
   for i, minion in pairs(EnemyMinions.objects) do
-    local pointSegment, pointLine, isOnSegment = VectorPointProjectionOnLineSegment(Vector(myHero), LineEnd, minion)  
+    local pointSegment, pointLine, isOnSegment = VectorPointProjectionOnLineSegment(Vector(myHero), LineEnd, minion)
     if isOnSegment and GetDistance(minion, pointSegment) <= 90*1.25 then
       n = n + 1
     end

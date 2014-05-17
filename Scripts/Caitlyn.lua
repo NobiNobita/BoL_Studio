@@ -1,5 +1,5 @@
 if myHero.charName ~= "Caitlyn" then return end
-local version = "1.10"
+local version = "1.11"
 
 -------------------------------------
 local REQUIRED_LIBS = {
@@ -15,7 +15,7 @@ function AfterDownload()
   DOWNLOAD_COUNT = DOWNLOAD_COUNT - 1
   if DOWNLOAD_COUNT == 0 then
     DOWNLOADING_LIBS = false
-    print("<b>[Caitlyn]: SourceLib downloaded successfully, please reload (double F9).</b>")
+    print("<b>[Caitlyn]: Libs downloaded successfully, please reload (double F9).</b>")
   end
 end
 
@@ -416,20 +416,27 @@ function PeacemakerKS()
 end
 
 function Peacemaker()
-  if mc.extras.debug then
+  --[[if mc.extras.debug then
     print("Calling PeaceMaker()")
-  end
+  end]]
   for i, target in pairs(GetEnemyHeroes()) do
     CastPosition,  HitChance,  Position = VP:GetLineCastPosition(Target, 0.632, 90, qRange, 2225, myHero)
+  if  not string.find(Target.name, "Turret") then
     if QAble and mc.draws.useQ and SOWi:CanMove() and HitChance >= mc.draws.HitChance and GetDistance(CastPosition) < qRange then
       if blue and mc.draws.blueQ and HitChance >= 1 then
         if mc.extras.debug then print("Casting Q More Often") end
         CastSpell(_Q, CastPosition.x, CastPosition.z)
       else
         if HitChance >= mc.draws.HitChance then CastSpell(_Q, CastPosition.x, CastPosition.z)
-        end
+        if mc.extras.debug then
+      print("Calling PeaceMaker() and target is")
+      print(Target.name)
+      print(target.name)
+    end
+    end
       end
     end
+  end
   end
 end
 
